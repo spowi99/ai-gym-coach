@@ -1,0 +1,1309 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI Gym Coach 5.0</title><style>
+:root{color-scheme:dark;--bg:#10151c;--panel:#1b2530;--accent:#b7ef65;--muted:#aab8c7}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f2f5f8;font:16px system-ui;max-width:760px;margin:auto;padding:18px}h1{margin:0;font-size:28px}h2{font-size:20px}p,small{color:var(--muted)}section{background:var(--panel);padding:17px;border-radius:16px;margin:14px 0}input,select,button,textarea{font:inherit;border:1px solid #526171;border-radius:9px;padding:12px;background:#111923;color:white;max-width:100%}input,select,textarea{width:100%;margin:5px 0 10px}button{cursor:pointer;margin:4px 2px}button.primary{background:var(--accent);color:#17210c;font-weight:700;border:0}nav{display:flex;flex-wrap:wrap;gap:4px;margin:15px 0}nav button.active{background:var(--accent);color:#111}label{font-size:14px;color:var(--muted)}.row{display:flex;gap:10px;align-items:center}.row>*{flex:1;min-width:0}.hidden{display:none}table{width:100%;border-collapse:collapse;font-size:14px}td,th{text-align:left;padding:8px 4px;border-bottom:1px solid #394653}img{max-width:100%;max-height:180px;border-radius:10px}canvas{width:100%;height:190px}strong{color:var(--accent)}.note{font-size:13px;color:var(--muted)}.danger{color:#ffb4a8} .exerciseCard{border-top:1px solid #394653;padding:5px 0}.exerciseLink{display:flex;text-align:left;align-items:center;gap:12px;width:100%;border:0;background:transparent;line-height:1.5}.exerciseLink img{width:70px;height:70px;object-fit:cover}.exerciseLink span{flex:1}summary{padding:12px 0;cursor:pointer}#recentSessions button{display:block;width:100%;text-align:left}button.primary{min-height:48px}#overview>button{width:100%} .libcard{display:flex;gap:12px;align-items:center;border-top:1px solid #394653;padding:12px 0}.libcard img{width:118px;flex:none}.libcard div{flex:1;min-width:0}.libcard p{font-size:13px;margin:5px 0}.libcard button{padding:8px;font-size:14px}.photoThumb{width:110px;flex-shrink:0;cursor:pointer}.photoThumb img,.photoPair img{width:100%;height:auto;object-fit:contain;background:#fff;border-radius:8px}.photoMissing{font-size:12px;color:var(--muted);padding:6px}.photoPair{display:grid;grid-template-columns:1fr 1fr;gap:8px}dialog{max-width:95vw;width:600px;background:var(--panel);color:#fff;border:1px solid #536475;border-radius:14px}dialog::backdrop{background:#000b}a{color:var(--accent)}[hidden]{display:none!important}</style><meta name="theme-color" content="#10151c"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"></head><body><h1>AI Gym Coach <strong>5.0 – Foto Edition</strong></h1><p>All inclusive Fitness · Muskelaufbau · Ganzkörper · 3× pro Woche</p><nav id="nav"></nav><section id="studioBar"><label>Aktives Studio</label><select id="studio"></select><div class="row"><input id="newStudio" placeholder="Neues Studio, z. B. Neuwied"><button onclick="addStudio()">+ Studio</button></div></section>
+<div id="training" class="page"><section id="overview"><h2>Dein letztes Training</h2><div id="sessionOverview"></div><button class="primary" onclick="startRepeat()">▶ Training wiederholen / fortsetzen</button><button onclick="finishSession()">Training abschließen</button><details><summary>Letzte 5 Trainingseinheiten</summary><div id="recentSessions"></div></details></section><section id="exercisePanel"><h2>Gerät / Übung</h2><select id="device"></select><button onclick="showEditor()">+ Neues Gerät</button><button class="primary" onclick="openLibrary()">▦ Übungsbibliothek</button><div id="library" class="hidden"><h2>Übungen nach Muskelgruppe</h2><select id="libGroup" onchange="renderLibrary()"></select><select id="libType" onchange="renderLibrary()"></select><input id="libSearch" placeholder="Übung suchen" oninput="renderLibrary()"><p>Standardfotos werden online aus Free Exercise DB geladen. Nicht verfügbare Fotos sind gekennzeichnet. Eigene Gerätefotos bleiben lokal gespeichert.</p><div id="libResults"></div><button onclick="$('library').classList.add('hidden')">Schließen</button></div><div id="editor" class="hidden"><label>Gerätefoto (lokal gespeichert)</label><input type="file" id="photo" accept="image/*" capture="environment"><img id="preview" class="hidden"><button onclick="copyPrompt()">KI-Erkennung: Prompt kopieren</button><p class="note">Foto in ChatGPT hochladen, Prompt einfügen und Ergebnis hier bestätigen. Diese Offline-Version erkennt Bilder nicht automatisch.</p><input id="devName" placeholder="Übung, z. B. Brustpresse"><input id="devModel" placeholder="Hersteller / Gerätenummer"><input id="devSetting" placeholder="Sitzhöhe / Griff / Einstellung"><select id="devType"><option>Maschine / Kabelzug</option><option>Freie Gewichte</option><option>Körpergewicht</option><option>Cardio</option><option>Kurzhantel</option><option>Langhantel</option><option>Multipresse</option><option>Maschine</option><option>Kabelzug</option></select><button class="primary" onclick="saveDevice()">Gerät speichern</button></div><div id="deviceInfo"></div><button onclick="editSetting()">Einstellungen ändern</button><button onclick="markDone()">✓ Übung abgeschlossen / nächste</button></section><section><h2>Letztes Training</h2><div id="last"></div><div id="advice"></div></section><section><h2>Heute protokollieren</h2><label>Datum</label><input type="date" id="date"><div class="row"><div><label>Gewicht (kg)</label><input id="kg" type="number" min="0" step="0.25" inputmode="decimal"></div><div><label>Wiederholungen / Minuten bei Cardio</label><input id="reps" type="number" min="1" step="1" inputmode="numeric"></div></div><label>Wiederholungen im Tank (RIR, optional)</label><input id="rir" type="number" min="0" max="10"><input id="setNote" placeholder="Notiz, z. B. Aufwärmsatz"><button onclick="voice()">🎙 Sprache</button><button class="primary" onclick="saveSet()">Satz speichern</button><div id="today"></div><div id="timerText" style="font-size:26px"></div><button onclick="startTimer(90)">90 s Pause</button><button onclick="startTimer(120)">120 s Pause</button><button onclick="stopTimer()">Timer stoppen</button></section></div>
+<div id="progress" class="page hidden"><section><h2>Fortschritt pro Gerät</h2><select id="progressDevice"></select><label>Zeitraum</label><select id="period" onchange="renderProgress()"><option value="0">Gesamt</option><option value="30">30 Tage</option><option value="60">60 Tage</option><option value="90">90 Tage</option></select><div id="metrics"></div><canvas id="chart" width="600" height="220"></canvas><div id="history"></div></section></div>
+<div id="body" class="page hidden"><section><h2>Körperwerte</h2><label>Datum</label><input type="date" id="bodyDate"><div id="bodyInputs"></div><button class="primary" onclick="saveBody()">Messung speichern</button><div id="bodyHistory"></div></section></div>
+<div id="backup" class="page hidden"><section><h2>Daten und Sicherung</h2><p>Deine Daten liegen lokal im Browser. Regelmäßig exportieren, insbesondere vor Gerätewechsel oder Löschen von Browserdaten.</p><button class="primary" onclick="exportData()">JSON exportieren</button><label>Import ersetzt alle aktuellen Daten nach Bestätigung.</label><input type="file" id="importFile" accept=".json,application/json"><button onclick="importData()">Sicherung wiederherstellen</button></section></div><p id="status" role="status"></p>
+<dialog id="photoDialog"><h2 id="photoTitle"></h2><div id="photoContent"></div><button onclick="this.closest('dialog').close()">Schließen</button></dialog><script>
+const $=id=>document.getElementById(id), key='aiGymCoachV1', uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8), todayDate=()=>{let d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,10)}, esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));let db={studios:[],devices:[],sets:[],body:[],active:''}, photoData='';try{let s=localStorage.getItem(key);if(s)db=JSON.parse(s)}catch(e){alert('Lokale Daten konnten nicht gelesen werden.')}function persist(){try{localStorage.setItem(key,JSON.stringify(db));$('status').textContent='Lokal gespeichert.'}catch(e){alert('Speicherung fehlgeschlagen. Bitte sofort Daten exportieren.')}}function opts(el,arr,val,placeholder){el.innerHTML=(placeholder?'<option value="">'+esc(placeholder)+'</option>':'')+arr.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('');if(arr.some(x=>x.id===val))el.value=val}function addStudio(){let name=$('newStudio').value.trim();if(!name)return;if(db.studios.some(s=>s.name.toLowerCase()===name.toLowerCase()))return alert('Studio existiert bereits.');let id=uid();db.studios.push({id,name});db.active=id;$('newStudio').value='';persist();refresh()}function refresh(){opts($('studio'),db.studios,db.active,'Studio auswählen');let ds=db.devices.filter(d=>d.studio===db.active);opts($('device'),ds,$('device').value,'Gerät auswählen');opts($('progressDevice'),ds,$('progressDevice').value,'Gerät auswählen');renderTraining();renderProgress();renderBody()}$('studio').onchange=()=>{db.active=$('studio').value;persist();refresh()};$('device').onchange=renderTraining;$('progressDevice').onchange=renderProgress;$('date').onchange=renderTraining;function showEditor(){if(!db.active)return alert('Zuerst ein Studio anlegen.');$('editor').classList.toggle('hidden')} $('photo').onchange=()=>{let f=$('photo').files[0];if(!f)return;let r=new FileReader();r.onload=()=>{let im=new Image();im.onload=()=>{let c=document.createElement('canvas'),scale=Math.min(1,640/Math.max(im.width,im.height));c.width=im.width*scale;c.height=im.height*scale;c.getContext('2d').drawImage(im,0,0,c.width,c.height);photoData=c.toDataURL('image/jpeg',.72);$('preview').src=photoData;$('preview').classList.remove('hidden')};im.src=r.result};r.readAsDataURL(f)};function copyPrompt(){let p='Identifiziere das fotografierte Fitnessgerät. Nenne Übung, Hersteller/Modell falls lesbar, Zielmuskeln, sinnvolle Einstellungen und erkennbare Unsicherheiten. Verwechsle nicht ähnliche Geräte. Antworte kurz.';if(navigator.clipboard)navigator.clipboard.writeText(p).catch(()=>prompt('Prompt kopieren',p));else prompt('Prompt kopieren',p)}function saveDevice(){let name=$('devName').value.trim();if(!name||!db.active)return alert('Studio und Übungsname erforderlich.');let id=uid();db.devices.push({id,studio:db.active,name,model:$('devModel').value,setting:$('devSetting').value,type:$('devType').value,photo:photoData});persist();$('editor').classList.add('hidden');['devName','devModel','devSetting','photo'].forEach(x=>$(x).value='');photoData='';$('preview').classList.add('hidden');refresh();$('device').value=id;renderTraining()}function setsFor(id){return db.sets.filter(s=>s.device===id).sort((a,b)=>a.date.localeCompare(b.date)||a.time-b.time)}function table(rows,del=false){return rows.length?'<table><tr><th>Datum</th><th>kg</th><th>Wdh./Min.</th><th>RIR</th><th>Notiz</th>'+(del?'<th></th>':'')+'</tr>'+rows.map(s=>'<tr><td>'+esc(s.date)+'</td><td>'+s.kg+'</td><td>'+s.reps+'</td><td>'+esc(s.rir??'–')+'</td><td>'+esc(s.note)+'</td>'+(del?'<td><button onclick="deleteSet(\''+s.id+'\')">×</button></td>':'')+'</tr>').join('')+'</table>':'<p>Noch keine Einträge.</p>'}function deleteSet(id){if(confirm('Satz löschen?')){db.sets=db.sets.filter(s=>s.id!==id);persist();refresh()}}function renderTraining(){let d=db.devices.find(x=>x.id===$('device').value),ss=setsFor(d?.id),date=$('date').value,prev=ss.filter(s=>s.date<date),lastDate=prev.at(-1)?.date,last=prev.filter(s=>s.date===lastDate);$('deviceInfo').innerHTML=d?'<p>'+esc(d.model)+' · '+esc(d.setting)+' · '+esc(d.type)+'</p>'+devicePicture(d):'';$('last').innerHTML=table(last);let work=last.filter(s=>!/aufwärm/i.test(s.note||''));$('advice').textContent=!d||!work.length?'Noch keine individuelle Empfehlung.':d.type==='Cardio'?'Vergleiche Dauer, Belastung und subjektive Anstrengung.':work.length>=2&&work.every(s=>s.reps>=12&&s.rir!==null&&s.rir>=1)?'Bei sauberer Technik: kleinste verfügbare Gewichtssteigerung erwägen.':'Gewicht zunächst halten und saubere Wiederholungen im Bereich 8–12 anstreben. Bei Schmerzen abbrechen.';$('today').innerHTML=table(ss.filter(s=>s.date===date),true)}function saveSet(){let device=$('device').value,kg=Number($('kg').value),reps=Number($('reps').value),rir=$('rir').value===''?null:Number($('rir').value);if(!device||!$('date').value||$('kg').value===''||!Number.isFinite(kg)||kg<0||!Number.isInteger(reps)||reps<1||(rir!==null&&(!Number.isInteger(rir)||rir<0||rir>10)))return alert('Bitte gültiges Gerät, Datum, Gewicht und Wiederholungen eingeben.');db.sets.push({id:uid(),device,date:$('date').value,kg,reps,rir,note:$('setNote').value,time:Date.now()});persist();$('reps').value='';$('rir').value='';$('setNote').value='';renderTraining();renderProgress()}function voice(){let R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R)return alert('Spracherkennung nicht verfügbar. Nutze das Mikrofon deiner Android-Tastatur.');let r=new R();r.lang='de-DE';r.onresult=e=>{let t=e.results[0][0].transcript.replace(/,/g,'.');let k=t.match(/(\d+(?:\.\d+)?)\s*(?:kg|kilo)/i),n=t.match(/(\d+)\s*(?:wiederholung|wdh|minuten)/i);if(k)$('kg').value=k[1];if(n)$('reps').value=n[1];$('status').textContent='Erkannt: '+t+' – bitte prüfen und speichern.'};r.onerror=()=>alert('Spracherkennung nicht verfügbar. Nutze die Tastatur.');try{r.start()}catch(e){alert('Mikrofon konnte nicht gestartet werden.')}}
+function renderProgress(){let id=$('progressDevice').value,d=db.devices.find(x=>x.id===id),ss=setsFor(id).filter(s=>!Number($('period').value)||s.date>=new Date(Date.now()-Number($('period').value)*86400000).toISOString().slice(0,10)),work=ss.filter(s=>!/aufwärm/i.test(s.note||'')),days=[...new Set(work.map(s=>s.date))],points=days.map(date=>({date,v:Math.max(...work.filter(s=>s.date===date).map(s=>d?.type==='Cardio'?s.reps:s.kg))})),first=points[0]?.v,last=points.at(-1)?.v;$('metrics').innerHTML=points.length?'<p>Einheiten: '+days.length+' · '+(d?.type==='Cardio'?'Max. Minuten':'Max. Gewicht')+': <strong>'+first+' → '+last+'</strong></p><p>Veränderung: <strong>'+(first>0?((last-first)/first*100).toFixed(1)+' %':'nicht berechenbar')+'</strong></p><p class="note">Gewicht bzw. Dauer sind Leistungsindikatoren, kein direkter Nachweis für Muskelzuwachs. Vergleiche auch Wiederholungen, Technik und RIR.</p>':'<p>Noch keine Verlaufsdaten.</p>';$('metrics').innerHTML+=work.length?'<p>Bestleistung: <strong>'+Math.max(...work.map(s=>s.kg))+' kg</strong> · '+(d?.type==='Cardio'?'Gesamtminuten: '+work.reduce((a,s)=>a+s.reps,0):'Volumen: '+work.reduce((a,s)=>a+s.kg*s.reps,0).toFixed(1)+' kg')+'</p>':'';$('history').innerHTML=table(ss.slice().reverse());let c=$('chart'),g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);if(!points.length)return;let max=Math.max(1,...points.map(p=>p.v))*1.1;g.strokeStyle='#526171';g.fillStyle='#aab8c7';g.font='12px system-ui';for(let i=0;i<=4;i++){let y=185-i*40;g.beginPath();g.moveTo(45,y);g.lineTo(580,y);g.stroke();g.fillText((max*i/4).toFixed(1),0,y)}g.strokeStyle='#b7ef65';g.lineWidth=3;g.beginPath();points.forEach((p,i)=>{let x=45+(points.length===1?0:i/(points.length-1)*530),y=185-p.v/max*160;i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();points.forEach((p,i)=>{let x=45+(points.length===1?0:i/(points.length-1)*530),y=185-p.v/max*160;g.fillStyle='#b7ef65';g.beginPath();g.arc(x,y,4,0,Math.PI*2);g.fill();if(i===0||i===points.length-1){g.fillStyle='#aab8c7';g.fillText(p.date,x>480?x-70:x,210)}})}
+const fields=[['weight','Körpergewicht (kg)'],['fat','Körperfett (%)'],['waist','Taille (cm)'],['chest','Brust (cm)'],['arm','Oberarm (cm)'],['thigh','Oberschenkel (cm)'],['hip','Hüfte (cm)']];$('bodyInputs').innerHTML=fields.map(([id,label])=>'<label>'+label+'</label><input type="number" min="0" step="0.1" id="b_'+id+'">').join('');function saveBody(){let date=$('bodyDate').value,entry={date};for(let [id] of fields){let v=$('b_'+id).value;if(v!==''){let n=Number(v);if(!Number.isFinite(n)||n<=0||(id==='fat'&&n>100))return alert('Ungültiger Messwert.');entry[id]=n}}if(!date||Object.keys(entry).length<2)return alert('Datum und mindestens einen Messwert eingeben.');let existing=db.body.find(x=>x.date===date);if(existing)Object.assign(existing,entry);else db.body.push(entry);persist();renderBody()}function renderBody(){let rows=db.body.slice().sort((a,b)=>a.date.localeCompare(b.date));$('bodyHistory').innerHTML=fields.map(([id,label])=>{let r=rows.filter(x=>x[id]!=null);return r.length?'<p>'+label+': <strong>'+r[0][id]+' → '+r.at(-1)[id]+'</strong> ('+(r.at(-1)[id]-r[0][id]).toFixed(1)+')</p>':''}).join('')+'<div style="overflow:auto"><table><tr><th>Datum</th>'+fields.map(([id,l])=>'<th>'+esc(l)+'</th>').join('')+'</tr>'+rows.slice().reverse().map(r=>'<tr><td>'+esc(r.date)+'</td>'+fields.map(([id])=>'<td>'+esc(r[id]??'–')+'</td>').join('')+'</tr>').join('')+'</table></div><p class="note">Körperfettwaagen liefern Schätzwerte. Unter gleichen Bedingungen messen.</p>'}function exportData(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download='AI-Gym-Coach-'+todayDate()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}async function importData(){let f=$('importFile').files[0];if(!f)return;try{let x=JSON.parse(await f.text());if(!['studios','devices','sets','body'].every(k=>Array.isArray(x[k])))throw Error();if(!confirm('Alle aktuellen Daten ersetzen?'))return;db=x;persist();refresh()}catch(e){alert('Ungültige Sicherung.')}}let pages=[['training','Training'],['progress','Verlauf'],['body','Körperwerte'],['backup','Sicherung']];$('nav').innerHTML=pages.map(([id,l])=>'<button id="nav_'+id+'" onclick="page(\''+id+'\')">'+l+'</button>').join('');function page(id){pages.forEach(([p])=>{$(p).classList.toggle('hidden',p!==id);$('nav_'+p).classList.toggle('active',p===id)});$('studioBar').classList.toggle('hidden',id==='body'||id==='backup');if(id==='progress')renderProgress()}$('date').value=$('bodyDate').value=todayDate();
+
+function sessions(){let ids=new Set(db.devices.filter(d=>d.studio===db.active).map(d=>d.id));let rows=db.sets.filter(s=>ids.has(s.device)).sort((a,b)=>a.date.localeCompare(b.date)||a.time-b.time);return [...new Set(rows.map(s=>s.date))].reverse().map(date=>({date,rows:rows.filter(s=>s.date===date)}))}
+function sessionState(){db.plans??={};let k=db.active+'|'+$('date').value;return db.plans[k]??= {order:[],done:[],finished:false}}
+function previousSession(){return sessions().find(s=>s.date<$('date').value)}
+function deviceBy(id){return db.devices.find(d=>d.id===id)}
+function orderOf(s){return [...new Set((s?.rows||[]).map(r=>r.device))]}
+function setSummary(rows){return rows.map(r=>r.kg+' kg × '+r.reps).join(' · ')}
+function renderOverview(){let prev=previousSession(),state=sessionState(),current=sessions().find(s=>s.date===$('date').value),order=[...new Set([...state.order,...orderOf(prev),...orderOf(current)])].filter(id=>deviceBy(id)?.studio===db.active);let h=prev?'<p>'+esc(prev.date)+' · '+orderOf(prev).length+' Übungen</p>':'<p>Noch kein früheres Training. Lege dein erstes Gerät an.</p>';if(state.finished)h+='<p><strong>✓ Training abgeschlossen</strong></p>';h+='<p>'+order.filter(id=>state.done.includes(id)).length+' von '+order.length+' Übungen abgeschlossen</p>';for(let id of order){let d=deviceBy(id),rows=prev?.rows.filter(r=>r.device===id)||[],now=current?.rows.filter(r=>r.device===id)||[];let b=document.createElement('button');h+='<div class="exerciseCard"><button class="exerciseLink" data-device="'+esc(id)+'">'+devicePicture(d)+'<span><strong>'+(state.done.includes(id)?'✓ ':'')+esc(d.name)+'</strong><br><small>'+esc(d.setting||'Keine Einstellungen')+'</small><br>'+esc(setSummary(rows)||'Noch keine früheren Sätze')+(now.length?'<br><small>Heute: '+esc(setSummary(now))+'</small>':'')+'</span></button></div>'} $('sessionOverview').innerHTML=h;$('sessionOverview').querySelectorAll('[data-device]').forEach(b=>b.onclick=()=>selectDevice(b.dataset.device));$('recentSessions').innerHTML='';sessions().slice(0,5).forEach(s=>{let b=document.createElement('button');b.textContent=s.date+' · '+orderOf(s).map(id=>deviceBy(id)?.name).join(', ');b.onclick=()=>{let st=sessionState();st.order=orderOf(s);st.finished=false;persist();renderOverview();let id=st.order.find(id=>!st.done.includes(id));if(id)selectDevice(id)};$('recentSessions').append(b)})}
+function selectDevice(id){$('device').value=id;renderTraining();$('exercisePanel').scrollIntoView({behavior:'smooth'})}
+function startRepeat(){if(!db.active)return alert('Bitte Studio anlegen.');let st=sessionState();if(!st.order.length)st.order=orderOf(previousSession());st.finished=false;persist();renderOverview();let id=st.order.find(id=>!st.done.includes(id));if(id)selectDevice(id);else if(!st.order.length)showEditor();else alert('Alle Übungen abgeschlossen. Du kannst weitere Geräte auswählen.')}
+function markDone(){let id=$('device').value;if(!id)return;let st=sessionState();if(!st.order.includes(id))st.order.push(id);if(!st.done.includes(id))st.done.push(id);persist();renderOverview();let next=st.order.find(x=>!st.done.includes(x));if(next)selectDevice(next);else $('overview').scrollIntoView({behavior:'smooth'})}
+function finishSession(){if(!db.active)return;let st=sessionState();if(!sessions().some(s=>s.date===$('date').value))return alert('Noch keine Sätze gespeichert.');st.finished=true;persist();renderOverview();$('overview').scrollIntoView({behavior:'smooth'})}
+function editSetting(){let d=deviceBy($('device').value);if(!d)return;let v=prompt('Sitz, Lehne, Polster, Griff und weitere Einstellungen',d.setting||'');if(v!==null){d.setting=v;persist();renderTraining();renderOverview()}}
+let timer;function stopTimer(){clearInterval(timer);$('timerText').textContent=''}function startTimer(n){stopTimer();let end=Date.now()+n*1000;function tick(){let left=Math.max(0,Math.ceil((end-Date.now())/1000));$('timerText').textContent=left?Math.floor(left/60)+':'+String(left%60).padStart(2,'0'):'Pause beendet';if(!left){clearInterval(timer);navigator.vibrate?.(200)}}tick();timer=setInterval(tick,250)}
+const originalRender=renderTraining;renderTraining=function(){originalRender();let id=$('device').value,ss=setsFor(id),date=$('date').value,prev=ss.filter(s=>s.date<date),last=prev.filter(s=>s.date===prev.at(-1)?.date),now=ss.filter(s=>s.date===date),template=last[now.length]||last.at(-1);if(template){$('kg').value=template.kg;$('reps').value=template.reps}else{$('kg').value='';$('reps').value=''}renderOverview()};
+const originalSave=saveSet;saveSet=function(){let n=db.sets.length;originalSave();if(db.sets.length>n){let st=sessionState(),id=$('device').value;if(!st.order.includes(id))st.order.push(id);st.finished=false;persist();renderOverview()}};
+$('device').onchange=renderTraining;$('date').onchange=renderTraining;
+
+const library=[
+[
+"Schulter",
+"Kurzhantel-Seitheben",
+"lateral",
+"Kurzhantel",
+"Je Hantel; Ellbogen leicht gebeugt, bis etwa Schulterhöhe anheben."
+],
+[
+"Schulter",
+"Kurzhantel-Schulterdrücken",
+"press",
+"Kurzhantel",
+"Je Hantel; kontrolliert über Kopf drücken."
+],
+[
+"Schulter",
+"Kurzhantel-Frontheben",
+"front",
+"Kurzhantel",
+"Je Hantel; Arme kontrolliert nach vorne heben."
+],
+[
+"Schulter",
+"Vorgebeugtes Seitheben",
+"fly",
+"Kurzhantel",
+"Je Hantel; Hüfte beugen, Arme seitlich öffnen."
+],
+[
+"Brust",
+"Kurzhantel-Bankdrücken",
+"bench",
+"Kurzhantel",
+"Je Hantel; Füße stabil, Handgelenke neutral."
+],
+[
+"Brust",
+"Kurzhantel-Flys",
+"benchfly",
+"Kurzhantel",
+"Je Hantel; Ellbogen leicht gebeugt, nur schmerzfreien Bewegungsumfang nutzen."
+],
+[
+"Brust",
+"Liegestütze",
+"pushup",
+"Körpergewicht",
+"Körper gerade halten; Brust kontrolliert absenken."
+],
+[
+"Rücken",
+"Einarmiges Kurzhantelrudern",
+"row",
+"Kurzhantel",
+"Je Hantel; Rücken neutral, Ellbogen zur Hüfte ziehen."
+],
+[
+"Rücken",
+"Langhantelrudern",
+"row",
+"Langhantel",
+"Gesamtgewicht inklusive Stange; Rumpf stabil."
+],
+[
+"Rücken",
+"Klimmzüge",
+"pull",
+"Körpergewicht",
+"Kontrolliert hochziehen, nicht schwingen."
+],
+[
+"Beine / Gesäß",
+"Goblet Squat",
+"squat",
+"Kurzhantel",
+"Gewicht einer Hantel vor der Brust; Knie folgen Fußrichtung."
+],
+[
+"Beine / Gesäß",
+"Langhantel-Kniebeuge",
+"squatbar",
+"Langhantel",
+"Gesamtgewicht inklusive Stange; stabiler Stand."
+],
+[
+"Beine / Gesäß",
+"Rumänisches Kreuzheben",
+"hinge",
+"Langhantel",
+"Gesamtgewicht bei Langhantel; Hüfte nach hinten führen."
+],
+[
+"Beine / Gesäß",
+"Ausfallschritte",
+"lunge",
+"Kurzhantel",
+"Je Hantel; kontrollierter Schritt, Wiederholungen je Seite."
+],
+[
+"Beine / Gesäß",
+"Wadenheben",
+"calf",
+"Körpergewicht",
+"Fersen kontrolliert heben und senken."
+],
+[
+"Bizeps",
+"Kurzhantel-Bizepscurls",
+"curl",
+"Kurzhantel",
+"Je Hantel; Oberarme ruhig halten."
+],
+[
+"Bizeps",
+"Hammercurls",
+"curl",
+"Kurzhantel",
+"Je Hantel; Handflächen zueinander."
+],
+[
+"Trizeps",
+"Kurzhantel-Trizepsstrecken über Kopf",
+"extension",
+"Kurzhantel",
+"Gewicht der verwendeten Hantel; Ellbogen stabil halten."
+],
+[
+"Trizeps",
+"Trizepsdrücken am Kabel",
+"pushdown",
+"Kabelzug",
+"Kabelzug und Griff je Studio dokumentieren; Oberarme ruhig halten."
+],
+[
+"Bauch / Rumpf",
+"Crunches",
+"crunch",
+"Körpergewicht",
+"Brustkorb Richtung Becken führen, nicht am Nacken ziehen."
+],
+[
+"Bauch / Rumpf",
+"Unterarmstütz (Plank)",
+"plank",
+"Körpergewicht",
+"Rumpf stabil halten; Dauer in Sekunden im Wiederholungsfeld notieren."
+],
+[
+"Bauch / Rumpf",
+"Beinheben liegend",
+"legraise",
+"Körpergewicht",
+"Beine kontrolliert heben; unteren Rücken stabil halten."
+],
+[
+"Brust",
+"Schrägbankdrücken",
+"bench",
+"Kurzhantel",
+"Je Hantel; Bankwinkel notieren."
+],
+[
+"Brust",
+"Negativbankdrücken",
+"bench",
+"Kurzhantel",
+"Je Hantel; sichere Beinfixierung."
+],
+[
+"Brust",
+"Schrägbank-Flys",
+"benchfly",
+"Kurzhantel",
+"Je Hantel; Ellbogen leicht gebeugt."
+],
+[
+"Brust",
+"Kurzhantel-Überzüge",
+"none",
+"Kurzhantel",
+"Eine Hantel; nur schmerzfreien Bewegungsumfang nutzen."
+],
+[
+"Brust",
+"Langhantel-Bankdrücken",
+"bench",
+"Langhantel",
+"Gesamtgewicht inklusive Stange; Sicherungen nutzen."
+],
+[
+"Brust",
+"Langhantel-Schrägbankdrücken",
+"bench",
+"Langhantel",
+"Gesamtgewicht; Bankwinkel notieren."
+],
+[
+"Brust",
+"Langhantel-Negativbankdrücken",
+"bench",
+"Langhantel",
+"Gesamtgewicht; Sicherungen nutzen."
+],
+[
+"Brust",
+"Enges Bankdrücken",
+"bench",
+"Langhantel",
+"Gesamtgewicht; Handgelenke neutral."
+],
+[
+"Brust",
+"Multipresse-Bankdrücken",
+"bench",
+"Multipresse",
+"Gewichtsangabe und Bankposition notieren; Anschläge einstellen."
+],
+[
+"Brust",
+"Multipresse-Schrägbankdrücken",
+"bench",
+"Multipresse",
+"Bankwinkel und Anschläge notieren."
+],
+[
+"Brust",
+"Multipresse-Negativbankdrücken",
+"bench",
+"Multipresse",
+"Beinfixierung und Anschläge prüfen."
+],
+[
+"Brust",
+"Brustpresse horizontal",
+"bench",
+"Maschine",
+"Sitzhöhe und Griffposition notieren."
+],
+[
+"Brust",
+"Brustpresse schräg",
+"bench",
+"Maschine",
+"Sitzhöhe notieren."
+],
+[
+"Brust",
+"Brustpresse sitzend konvergent",
+"bench",
+"Maschine",
+"Gewicht pro Seite oder Gesamtgewicht festhalten."
+],
+[
+"Brust",
+"Butterfly / Pec Deck",
+"none",
+"Maschine",
+"Sitzhöhe und Startposition notieren."
+],
+[
+"Brust",
+"Brustpresse plate-loaded",
+"bench",
+"Maschine",
+"Gewicht pro Seite eindeutig notieren."
+],
+[
+"Brust",
+"Cable Fly mittig",
+"none",
+"Kabelzug",
+"Zughöhe und Gewicht pro Seite notieren."
+],
+[
+"Brust",
+"Cable Fly von oben",
+"none",
+"Kabelzug",
+"Zughöhe und Gewicht pro Seite notieren."
+],
+[
+"Brust",
+"Cable Fly von unten",
+"none",
+"Kabelzug",
+"Zughöhe und Gewicht pro Seite notieren."
+],
+[
+"Brust",
+"Kabel-Brustdrücken",
+"none",
+"Kabelzug",
+"Zughöhe und Standposition notieren."
+],
+[
+"Rücken",
+"Kurzhantelrudern beidarmig",
+"row",
+"Kurzhantel",
+"Je Hantel; Rumpf stabil."
+],
+[
+"Rücken",
+"Brustgestütztes Kurzhantelrudern",
+"row",
+"Kurzhantel",
+"Je Hantel; Bankwinkel notieren."
+],
+[
+"Rücken",
+"Kurzhantel-Shrugs",
+"none",
+"Kurzhantel",
+"Je Hantel; Schultern gerade nach oben führen."
+],
+[
+"Rücken",
+"Pendlay Row",
+"row",
+"Langhantel",
+"Gesamtgewicht; jede Wiederholung kontrolliert vom Boden."
+],
+[
+"Rücken",
+"Langhantelrudern Untergriff",
+"row",
+"Langhantel",
+"Gesamtgewicht; Rumpf stabil."
+],
+[
+"Rücken",
+"Langhantel-Kreuzheben",
+"hinge",
+"Langhantel",
+"Gesamtgewicht; Last körpernah führen."
+],
+[
+"Rücken",
+"Langhantel-Shrugs",
+"none",
+"Langhantel",
+"Gesamtgewicht; Schultern ohne Kreisen heben."
+],
+[
+"Rücken",
+"Landmine-Rudern",
+"row",
+"Langhantel",
+"Aufgelegtes Gewicht und Griff notieren."
+],
+[
+"Rücken",
+"Multipresse-Rudern",
+"row",
+"Multipresse",
+"Stangenhöhe und Gewichtskonvention notieren."
+],
+[
+"Rücken",
+"Multipresse-Shrugs",
+"none",
+"Multipresse",
+"Starthöhe notieren; Schultern gerade heben."
+],
+[
+"Rücken",
+"Latzugmaschine breit",
+"none",
+"Maschine",
+"Sitz und Oberschenkelpolster notieren."
+],
+[
+"Rücken",
+"Rudermaschine sitzend",
+"row",
+"Maschine",
+"Sitz und Brustpolster notieren."
+],
+[
+"Rücken",
+"High Row Maschine",
+"row",
+"Maschine",
+"Sitz und Griff notieren."
+],
+[
+"Rücken",
+"Low Row Maschine",
+"row",
+"Maschine",
+"Sitz und Griff notieren."
+],
+[
+"Rücken",
+"T-Bar Rudermaschine",
+"row",
+"Maschine",
+"Brustpolster und Gewichtsangabe notieren."
+],
+[
+"Rücken",
+"Klimmzugmaschine assistiert",
+"pull",
+"Maschine",
+"Unterstützungsgewicht notieren; weniger Hilfe ist schwerer."
+],
+[
+"Rücken",
+"Überzugmaschine",
+"none",
+"Maschine",
+"Sitz und Hebelstart notieren."
+],
+[
+"Rücken",
+"Rückenstrecker-Maschine",
+"none",
+"Maschine",
+"Polster und Bewegungsbereich notieren."
+],
+[
+"Rücken",
+"Latzug breiter Obergriff",
+"none",
+"Kabelzug",
+"Griff und Polster notieren; zur oberen Brust ziehen."
+],
+[
+"Rücken",
+"Latzug enger Neutralgriff",
+"none",
+"Kabelzug",
+"Griff und Polster notieren."
+],
+[
+"Rücken",
+"Latzug Untergriff",
+"none",
+"Kabelzug",
+"Griff und Polster notieren."
+],
+[
+"Rücken",
+"Einarmiger Latzug",
+"none",
+"Kabelzug",
+"Gewicht und Wiederholungen je Seite."
+],
+[
+"Rücken",
+"Kabelrudern eng",
+"row",
+"Kabelzug",
+"Griff und Sitzposition notieren."
+],
+[
+"Rücken",
+"Kabelrudern breit",
+"row",
+"Kabelzug",
+"Griff und Sitzposition notieren."
+],
+[
+"Rücken",
+"Einarmiges Kabelrudern",
+"row",
+"Kabelzug",
+"Gewicht je Seite; Rumpf stabil."
+],
+[
+"Rücken",
+"Straight Arm Pulldown",
+"none",
+"Kabelzug",
+"Arme leicht gebeugt; Zughöhe notieren."
+],
+[
+"Schulter",
+"Arnold Press",
+"press",
+"Kurzhantel",
+"Je Hantel; kontrollierte Rotation."
+],
+[
+"Schulter",
+"Seitheben sitzend",
+"lateral",
+"Kurzhantel",
+"Je Hantel; kein Schwung."
+],
+[
+"Schulter",
+"Seitheben einarmig",
+"lateral",
+"Kurzhantel",
+"Je Hantel; Wiederholungen je Seite."
+],
+[
+"Schulter",
+"Schulterdrücken sitzend",
+"press",
+"Kurzhantel",
+"Je Hantel; Lehnenwinkel notieren."
+],
+[
+"Schulter",
+"Military Press",
+"press",
+"Langhantel",
+"Gesamtgewicht; Rumpf stabil."
+],
+[
+"Schulter",
+"Langhantel-Frontheben",
+"front",
+"Langhantel",
+"Gesamtgewicht; kontrolliert heben."
+],
+[
+"Schulter",
+"Landmine Press",
+"press",
+"Langhantel",
+"Aufgelegtes Gewicht und Seite notieren."
+],
+[
+"Schulter",
+"Multipresse-Schulterdrücken sitzend",
+"press",
+"Multipresse",
+"Sitzposition und Anschläge notieren."
+],
+[
+"Schulter",
+"Multipresse-Schulterdrücken stehend",
+"press",
+"Multipresse",
+"Anschläge einstellen; Rumpf stabil."
+],
+[
+"Schulter",
+"Schulterpresse",
+"press",
+"Maschine",
+"Sitzhöhe und Griff notieren."
+],
+[
+"Schulter",
+"Seitheben-Maschine",
+"lateral",
+"Maschine",
+"Sitz und Armpolster notieren."
+],
+[
+"Schulter",
+"Reverse Butterfly",
+"fly",
+"Maschine",
+"Sitzhöhe und Griff notieren."
+],
+[
+"Schulter",
+"Schulterpresse plate-loaded",
+"press",
+"Maschine",
+"Gewicht pro Seite oder Gesamtgewicht notieren."
+],
+[
+"Schulter",
+"Kabel-Seitheben einarmig",
+"lateral",
+"Kabelzug",
+"Zughöhe und Seite notieren."
+],
+[
+"Schulter",
+"Kabel-Frontheben",
+"front",
+"Kabelzug",
+"Zughöhe und Griff notieren."
+],
+[
+"Schulter",
+"Face Pulls",
+"none",
+"Kabelzug",
+"Seil auf Gesichtshöhe; kontrolliert ziehen."
+],
+[
+"Schulter",
+"Reverse Cable Fly",
+"fly",
+"Kabelzug",
+"Zughöhe und Gewicht je Seite notieren."
+],
+[
+"Beine / Gesäß",
+"Bulgarian Split Squat",
+"lunge",
+"Kurzhantel",
+"Je Hantel; Wiederholungen je Seite."
+],
+[
+"Beine / Gesäß",
+"Kurzhantel-Step-ups",
+"none",
+"Kurzhantel",
+"Je Hantel; stabile Plattform verwenden."
+],
+[
+"Beine / Gesäß",
+"Kurzhantel-Rumänisches Kreuzheben",
+"hinge",
+"Kurzhantel",
+"Je Hantel; Hüfte nach hinten."
+],
+[
+"Beine / Gesäß",
+"Kurzhantel-Sumo-Kniebeuge",
+"squat",
+"Kurzhantel",
+"Gewicht der verwendeten Hantel."
+],
+[
+"Beine / Gesäß",
+"Kurzhantel-Wadenheben",
+"calf",
+"Kurzhantel",
+"Je Hantel; kontrolliert absenken."
+],
+[
+"Beine / Gesäß",
+"Kurzhantel-Hip Thrust",
+"none",
+"Kurzhantel",
+"Hantel gepolstert auf dem Becken."
+],
+[
+"Beine / Gesäß",
+"Frontkniebeuge",
+"squatbar",
+"Langhantel",
+"Gesamtgewicht; stabiler Rumpf."
+],
+[
+"Beine / Gesäß",
+"Sumo-Kreuzheben",
+"hinge",
+"Langhantel",
+"Gesamtgewicht; Knie folgen Fußrichtung."
+],
+[
+"Beine / Gesäß",
+"Langhantel-Hip Thrust",
+"none",
+"Langhantel",
+"Gesamtgewicht; Bankhöhe und Polster notieren."
+],
+[
+"Beine / Gesäß",
+"Good Mornings",
+"hinge",
+"Langhantel",
+"Gesamtgewicht; leicht beginnen."
+],
+[
+"Beine / Gesäß",
+"Langhantel-Ausfallschritte",
+"lunge",
+"Langhantel",
+"Gesamtgewicht; Wiederholungen je Seite."
+],
+[
+"Beine / Gesäß",
+"Langhantel-Wadenheben",
+"calf",
+"Langhantel",
+"Gesamtgewicht; sichere Ablage nutzen."
+],
+[
+"Beine / Gesäß",
+"Multipresse-Kniebeuge",
+"squatbar",
+"Multipresse",
+"Fußposition und Anschläge notieren."
+],
+[
+"Beine / Gesäß",
+"Multipresse-Frontkniebeuge",
+"squatbar",
+"Multipresse",
+"Anschläge und Fußposition notieren."
+],
+[
+"Beine / Gesäß",
+"Multipresse-Ausfallschritte",
+"lunge",
+"Multipresse",
+"Stand und Anschläge notieren."
+],
+[
+"Beine / Gesäß",
+"Multipresse-Bulgarian Split Squat",
+"lunge",
+"Multipresse",
+"Bankposition und Anschläge notieren."
+],
+[
+"Beine / Gesäß",
+"Multipresse-Hip Thrust",
+"none",
+"Multipresse",
+"Bankposition und Polster notieren."
+],
+[
+"Beine / Gesäß",
+"Multipresse-Wadenheben",
+"calf",
+"Multipresse",
+"Plattform und Anschläge sichern."
+],
+[
+"Beine / Gesäß",
+"Multipresse-Rumänisches Kreuzheben",
+"hinge",
+"Multipresse",
+"Anschläge und Starthöhe notieren."
+],
+[
+"Beine / Gesäß",
+"Beinpresse 45 Grad",
+"none",
+"Maschine",
+"Sitz, Fußposition und Gewichtskonvention notieren."
+],
+[
+"Beine / Gesäß",
+"Beinpresse horizontal",
+"none",
+"Maschine",
+"Sitz und Rückenlehne notieren."
+],
+[
+"Beine / Gesäß",
+"Einbeinige Beinpresse",
+"none",
+"Maschine",
+"Sitz und Wiederholungen je Seite."
+],
+[
+"Beine / Gesäß",
+"Hackenschmidt-Kniebeuge",
+"squat",
+"Maschine",
+"Fußposition und Anschläge notieren."
+],
+[
+"Beine / Gesäß",
+"Pendulum Squat",
+"squat",
+"Maschine",
+"Fußposition und Anschläge notieren."
+],
+[
+"Beine / Gesäß",
+"Belt Squat Maschine",
+"squat",
+"Maschine",
+"Gurt und Standposition notieren."
+],
+[
+"Beine / Gesäß",
+"Beinstrecker",
+"none",
+"Maschine",
+"Drehachse auf Kniehöhe; Polster notieren."
+],
+[
+"Beine / Gesäß",
+"Beinbeuger sitzend",
+"none",
+"Maschine",
+"Sitz, Polster und Startwinkel notieren."
+],
+[
+"Beine / Gesäß",
+"Beinbeuger liegend",
+"none",
+"Maschine",
+"Polster und Startwinkel notieren."
+],
+[
+"Beine / Gesäß",
+"Beinbeuger stehend einbeinig",
+"none",
+"Maschine",
+"Polster und Seite notieren."
+],
+[
+"Beine / Gesäß",
+"Abduktorenmaschine",
+"none",
+"Maschine",
+"Sitz und Startposition notieren."
+],
+[
+"Beine / Gesäß",
+"Adduktorenmaschine",
+"none",
+"Maschine",
+"Sitz und Startposition notieren."
+],
+[
+"Beine / Gesäß",
+"Glute Kickback Maschine",
+"none",
+"Maschine",
+"Polster und Seite notieren."
+],
+[
+"Beine / Gesäß",
+"Hip Thrust Maschine",
+"none",
+"Maschine",
+"Gurt und Fußposition notieren."
+],
+[
+"Beine / Gesäß",
+"Wadenmaschine stehend",
+"calf",
+"Maschine",
+"Schulterpolster notieren."
+],
+[
+"Beine / Gesäß",
+"Wadenmaschine sitzend",
+"none",
+"Maschine",
+"Kniepolster und Sitz notieren."
+],
+[
+"Beine / Gesäß",
+"Wadenheben an der Beinpresse",
+"none",
+"Maschine",
+"Nur mit geeigneter Maschine und sicherer Fußposition."
+],
+[
+"Beine / Gesäß",
+"Kabel-Kickbacks",
+"none",
+"Kabelzug",
+"Fußmanschette und Zughöhe notieren."
+],
+[
+"Beine / Gesäß",
+"Kabel-Hüftabduktion",
+"none",
+"Kabelzug",
+"Fußmanschette; je Seite."
+],
+[
+"Beine / Gesäß",
+"Kabel-Hüftadduktion",
+"none",
+"Kabelzug",
+"Fußmanschette; je Seite."
+],
+[
+"Beine / Gesäß",
+"Cable Pull Through",
+"hinge",
+"Kabelzug",
+"Seil; Hüfte nach hinten führen."
+],
+[
+"Bizeps",
+"Schrägbankcurls",
+"curl",
+"Kurzhantel",
+"Je Hantel; Bankwinkel notieren."
+],
+[
+"Bizeps",
+"Konzentrationscurls",
+"curl",
+"Kurzhantel",
+"Je Hantel; Oberarm abstützen."
+],
+[
+"Bizeps",
+"Scottcurls mit Kurzhantel",
+"curl",
+"Kurzhantel",
+"Je Hantel; Polsterhöhe notieren."
+],
+[
+"Bizeps",
+"Zottman Curls",
+"curl",
+"Kurzhantel",
+"Je Hantel; langsam absenken."
+],
+[
+"Bizeps",
+"Langhantelcurls",
+"curl",
+"Langhantel",
+"Gesamtgewicht; kein Schwung."
+],
+[
+"Bizeps",
+"SZ-Curls",
+"curl",
+"Langhantel",
+"Gesamtgewicht inklusive SZ-Stange."
+],
+[
+"Bizeps",
+"SZ-Scottcurls",
+"curl",
+"Langhantel",
+"Gesamtgewicht; Polsterhöhe notieren."
+],
+[
+"Bizeps",
+"Reverse Curls",
+"curl",
+"Langhantel",
+"Gesamtgewicht; Obergriff."
+],
+[
+"Bizeps",
+"Bizepscurl-Maschine",
+"curl",
+"Maschine",
+"Sitz und Polster notieren."
+],
+[
+"Bizeps",
+"Scottcurl-Maschine",
+"curl",
+"Maschine",
+"Sitz und Polster notieren."
+],
+[
+"Bizeps",
+"Kabelcurls mit Stange",
+"curl",
+"Kabelzug",
+"Zughöhe und Griff notieren."
+],
+[
+"Bizeps",
+"Kabel-Hammercurls mit Seil",
+"curl",
+"Kabelzug",
+"Seil; Oberarme ruhig."
+],
+[
+"Bizeps",
+"Bayesian Cable Curl",
+"curl",
+"Kabelzug",
+"Zughöhe und Standposition notieren."
+],
+[
+"Bizeps",
+"Einarmige Kabelcurls",
+"curl",
+"Kabelzug",
+"Gewicht und Wiederholungen je Seite."
+],
+[
+"Trizeps",
+"Kurzhantel-Kickbacks",
+"none",
+"Kurzhantel",
+"Je Hantel; Oberarm ruhig."
+],
+[
+"Trizeps",
+"Kurzhantel-French Press liegend",
+"none",
+"Kurzhantel",
+"Je Hantel; Ellbogen kontrollieren."
+],
+[
+"Trizeps",
+"SZ-French Press liegend",
+"none",
+"Langhantel",
+"Gesamtgewicht; kontrolliert absenken."
+],
+[
+"Trizeps",
+"Langhantel-Trizepsstrecken über Kopf",
+"extension",
+"Langhantel",
+"Gesamtgewicht; Rumpf stabil."
+],
+[
+"Trizeps",
+"Multipresse-Bankdrücken eng",
+"bench",
+"Multipresse",
+"Bankposition und Anschläge notieren."
+],
+[
+"Trizeps",
+"Trizepsmaschine sitzend",
+"none",
+"Maschine",
+"Sitz und Griff notieren."
+],
+[
+"Trizeps",
+"Dipmaschine",
+"none",
+"Maschine",
+"Sitz und Griff notieren."
+],
+[
+"Trizeps",
+"Dipmaschine assistiert",
+"none",
+"Maschine",
+"Unterstützungsgewicht notieren; weniger Hilfe ist schwerer."
+],
+[
+"Trizeps",
+"Trizepsdrücken mit Seil",
+"pushdown",
+"Kabelzug",
+"Seil und Zughöhe notieren."
+],
+[
+"Trizeps",
+"Trizepsdrücken mit gerader Stange",
+"pushdown",
+"Kabelzug",
+"Griff und Zughöhe notieren."
+],
+[
+"Trizeps",
+"Einarmiges Trizepsdrücken",
+"pushdown",
+"Kabelzug",
+"Gewicht je Seite."
+],
+[
+"Trizeps",
+"Überkopf-Trizepsstrecken am Kabel",
+"extension",
+"Kabelzug",
+"Zughöhe und Griff notieren."
+],
+[
+"Bauch / Rumpf",
+"Bauchmaschine / Crunchmaschine",
+"crunch",
+"Maschine",
+"Sitz und Polster notieren."
+],
+[
+"Bauch / Rumpf",
+"Rotationsmaschine",
+"none",
+"Maschine",
+"Sitz und Startwinkel notieren; je Seite."
+],
+[
+"Bauch / Rumpf",
+"Captain Chair Beinheben",
+"none",
+"Maschine",
+"Polsterposition notieren."
+],
+[
+"Bauch / Rumpf",
+"Cable Crunch",
+"crunch",
+"Kabelzug",
+"Seil und Zughöhe notieren."
+],
+[
+"Bauch / Rumpf",
+"Pallof Press",
+"none",
+"Kabelzug",
+"Zughöhe und Seite notieren."
+],
+[
+"Bauch / Rumpf",
+"Woodchopper",
+"none",
+"Kabelzug",
+"Zughöhe und Seite notieren."
+],
+[
+"Bauch / Rumpf",
+"Seitstütz",
+"none",
+"Körpergewicht",
+"Dauer je Seite in Sekunden notieren."
+],
+[
+"Bauch / Rumpf",
+"Reverse Crunch",
+"crunch",
+"Körpergewicht",
+"Becken kontrolliert einrollen."
+],
+[
+"Bauch / Rumpf",
+"Hängendes Knieheben",
+"none",
+"Körpergewicht",
+"Ohne Schwung."
+],
+[
+"Bauch / Rumpf",
+"Dead Bug",
+"none",
+"Körpergewicht",
+"Rücken stabil halten."
+],
+[
+"Bauch / Rumpf",
+"Bird Dog",
+"none",
+"Körpergewicht",
+"Rumpf stabil; je Seite."
+],
+[
+"Bauch / Rumpf",
+"Mountain Climbers",
+"none",
+"Körpergewicht",
+"Kontrollierte Wiederholungen."
+],
+[
+"Brust",
+"Dips",
+"none",
+"Körpergewicht",
+"Schmerzfreien Bewegungsumfang wählen."
+],
+[
+"Brust",
+"Erhöhte Liegestütze",
+"pushup",
+"Körpergewicht",
+"Stabile Auflage nutzen."
+],
+[
+"Rücken",
+"Klimmzüge Untergriff",
+"pull",
+"Körpergewicht",
+"Ohne Schwung."
+],
+[
+"Rücken",
+"Inverted Row",
+"none",
+"Körpergewicht",
+"Stabile Stange; Körper gerade."
+],
+[
+"Rücken",
+"Hyperextensions",
+"none",
+"Körpergewicht",
+"Polsterhöhe notieren; nicht überstrecken."
+],
+[
+"Beine / Gesäß",
+"Kniebeugen ohne Gewicht",
+"squat",
+"Körpergewicht",
+"Stabiler Stand."
+],
+[
+"Beine / Gesäß",
+"Glute Bridge",
+"none",
+"Körpergewicht",
+"Becken kontrolliert heben."
+],
+[
+"Beine / Gesäß",
+"Seitliche Ausfallschritte",
+"none",
+"Körpergewicht",
+"Je Seite; kontrolliert."
+],
+[
+"Beine / Gesäß",
+"Step-ups ohne Gewicht",
+"none",
+"Körpergewicht",
+"Stabile Plattform nutzen."
+],
+[
+"Unterarme / Griff",
+"Handgelenkcurls",
+"none",
+"Kurzhantel",
+"Je Hantel; Unterarm abstützen."
+],
+[
+"Unterarme / Griff",
+"Reverse Wrist Curls",
+"none",
+"Kurzhantel",
+"Je Hantel; Unterarm abstützen."
+],
+[
+"Unterarme / Griff",
+"Farmer Walk",
+"none",
+"Kurzhantel",
+"Je Hantel; Strecke oder Dauer in Notizen."
+],
+[
+"Bauch / Rumpf",
+"Suitcase Carry",
+"none",
+"Kurzhantel",
+"Je Hantel; aufrecht gehen; Strecke notieren."
+]
+];
+function illustration(kind){
+const stand=[[50,22],[50,42],[50,73],[35,105],[65,105],[30,52],[20,75],[70,52],[80,75]];
+const pose=(base,changes)=>base.map((p,i)=>changes[i]||p);
+let a=stand,b=stand,weights=true,bench=false,bar=false;
+const hanging={5:[37,61],6:[37,84],7:[63,61],8:[63,84]};
+a=pose(stand,hanging);
+switch(kind){
+case 'lateral': b=pose(stand,{5:[28,43],6:[8,46],7:[72,43],8:[92,46]});break;
+case 'press': a=pose(stand,{5:[27,48],6:[27,28],7:[73,48],8:[73,28]});b=pose(stand,{5:[36,21],6:[36,5],7:[64,21],8:[64,5]});break;
+case 'front': b=pose(stand,{5:[65,43],6:[87,42],7:[65,48],8:[87,47]});break;
+case 'fly': a=pose(stand,{0:[78,35],1:[65,49],2:[40,73],5:[68,69],6:[68,90],7:[72,69],8:[72,90]});b=pose(a,{5:[45,42],6:[22,38],7:[84,47],8:[96,39]});break;
+case 'bench':case 'benchfly': bench=true;a=[[22,63],[35,70],[65,70],[85,105],[93,105],[36,52],[23,40],[48,53],[62,40]];b=pose(a,kind==='bench'?{5:[35,45],6:[35,22],7:[48,45],8:[48,22]}:{5:[38,45],6:[44,22],7:[46,45],8:[44,22]});break;
+case 'pushup':weights=false;a=[[20,49],[32,58],[65,78],[94,99],[94,99],[31,81],[32,105],[36,81],[38,105]];b=pose(a,{0:[20,82],1:[32,85],2:[65,92],5:[17,92],6:[32,105],7:[23,92],8:[38,105]});break;
+case 'row':a=[[78,35],[65,49],[40,73],[32,105],[66,105],[66,70],[66,92],[70,70],[70,92]];b=pose(a,{5:[42,51],6:[63,64],7:[46,53],8:[67,66]});break;
+case 'pull':weights=false;bar=true;a=pose(stand,{0:[50,42],1:[50,60],2:[50,87],3:[39,111],4:[61,111],5:[28,35],6:[18,12],7:[72,35],8:[82,12]});b=pose(a,{0:[50,6],1:[50,24],2:[50,53],3:[39,85],4:[61,85],5:[25,34],7:[75,34]});break;
+case 'squat':case 'squatbar':a=pose(stand,{5:[35,53],6:[47,46],7:[65,53],8:[53,46]});b=pose(a,{0:[62,48],1:[58,62],2:[37,83],3:[25,105],4:[65,105],5:[55,76],6:[60,62],7:[70,76],8:[64,62]});if(kind==='squatbar'){a=pose(a,{6:[25,34],8:[75,34]});b=pose(b,{6:[33,56],8:[83,56]});}break;
+case 'hinge':b=pose(stand,{0:[79,48],1:[66,56],2:[33,73],5:[66,77],6:[66,98],7:[72,77],8:[72,98]});break;
+case 'lunge':b=pose(a,{0:[53,42],1:[53,58],2:[53,81],3:[17,105],4:[87,105],5:[38,72],6:[38,94],7:[68,72],8:[68,94]});break;
+case 'calf':weights=false;b=pose(stand,{0:[50,13],1:[50,33],2:[50,64],3:[35,98],4:[65,98]});break;
+case 'curl':b=pose(a,{6:[35,38],8:[65,38]});break;
+case 'extension':a=pose(stand,{5:[42,20],6:[50,5],7:[58,20],8:[50,5]});b=pose(a,{6:[50,38],8:[50,38]});break;
+case 'pushdown':a=pose(stand,{5:[40,63],6:[64,60],7:[45,66],8:[69,63]});b=pose(a,{6:[45,85],8:[50,88]});break;
+case 'crunch':weights=false;a=[[18,93],[31,98],[60,100],[82,105],[89,105],[24,83],[18,87],[33,83],[26,87]];b=pose(a,{0:[30,58],1:[38,72],5:[25,70],6:[30,60],7:[45,65],8:[37,60]});break;
+case 'plank':weights=false;a=[[18,63],[30,68],[63,78],[94,101],[94,101],[30,91],[15,103],[37,91],[22,103]];b=a;break;
+case 'legraise':weights=false;a=[[15,90],[28,99],[55,99],[92,100],[92,100],[38,105],[54,105],[42,105],[58,105]];b=pose(a,{3:[55,48],4:[59,48]});break;
+}
+function draw(p,x){let [h,n,hip,f1,f2,e1,w1,e2,w2]=p;let line=(u,v,c='#dbe8f3',sw=5)=>`<path d="M${u[0]} ${u[1]}L${v[0]} ${v[1]}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;let limb=(e,w)=>line(n,e)+line(e,w);let leg=(f)=>{let k=[(hip[0]+f[0])/2,(hip[1]+f[1])/2];if(kind.startsWith('squat')&&hip[1]>80)k=[f[0]+12,hip[1]];if(kind==='lunge'&&hip[1]>80)k=[f[0],hip[1]];return line(hip,k)+line(k,f)};return `<g transform="translate(${x},13)"><path d="M4 108H96" stroke="#526171"/>${bench?'<path d="M10 76H72M20 76V108M65 76V108" stroke="#718397" stroke-width="4"/>':''}${bar?'<path d="M8 12H92" stroke="#718397" stroke-width="4"/>':''}${line(n,hip,'#b7ef65',10)}${leg(f1)}${leg(f2)}${limb(e1,w1)}${limb(e2,w2)}<circle cx="${h[0]}" cy="${h[1]}" r="7" fill="#dbe8f3"/>${weights?[w1,w2].map(w=>`<path d="M${w[0]-7} ${w[1]}h14" stroke="#f3b66b" stroke-width="6" stroke-linecap="round"/>`).join(''):''}</g>`}
+let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="220" height="150" viewBox="0 0 220 150"><rect width="220" height="150" rx="10" fill="#111923"/>${draw(a,4)}${draw(b,116)}<text x="54" y="143" fill="#aab8c7" font-size="10" text-anchor="middle">Start</text><text x="166" y="143" fill="#aab8c7" font-size="10" text-anchor="middle">${kind==='plank'?'Halten':'Ende'}</text><path d="M103 74h12l-4 -4m4 4l-4 4" stroke="#b7ef65" fill="none"/></svg>`;return 'data:image/svg+xml;base64,'+btoa(svg)}
+function libraryImage(e){if(e[2]!=='none'&&['Kurzhantel','Körpergewicht'].includes(e[3]))return illustration(e[2]);let type=e[3],icon=type==='Multipresse'?'<path d="M35 105V20H185V105M55 20V105M165 20V105M45 55H175"/>':type==='Maschine'?'<path d="M55 105V22H160V105M60 35H95V85H60ZM110 78H150V105M135 78V45"/>':type==='Kabelzug'?'<path d="M45 105V20H175V105M45 30L105 70L175 30M95 70H115"/>':type==='Langhantel'?'<path d="M30 65H190M50 45V85M65 40V90M155 40V90M170 45V85"/>':'<path d="M70 65H150M65 45V85M80 45V85M140 45V85M155 45V85"/>';let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="220" height="150"><rect width="220" height="150" rx="10" fill="#111923"/><g fill="none" stroke="#b7ef65" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">${icon}</g><text x="110" y="130" fill="#dbe8f3" text-anchor="middle" font-size="13">${type}</text></svg>`;return 'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)))}
+function openLibrary(){if(!db.active)return alert('Zuerst ein Studio auswählen oder anlegen.');$('editor').classList.add('hidden');$('library').classList.toggle('hidden');renderLibrary()}
+$('libGroup').innerHTML='<option value="">Alle Muskelgruppen</option>'+[...new Set(library.map(e=>e[0]))].map(g=>'<option>'+esc(g)+'</option>').join('');
+$('libType').innerHTML='<option value="">Alle Trainingsarten</option>'+[...new Set(library.map(e=>e[3]))].sort().map(t=>'<option>'+esc(t)+'</option>').join('');
+
+const photoCandidates={"0": "Side_Lateral_Raise", "1": "Dumbbell_Shoulder_Press", "2": "Front_Dumbbell_Raise", "3": "Seated_Bent-Over_Rear_Delt_Raise", "4": "Dumbbell_Bench_Press", "5": "Dumbbell_Flyes", "6": "Pushups", "7": "One-Arm_Dumbbell_Row", "8": "Bent_Over_Barbell_Row", "9": "Pullups", "10": "Goblet_Squat", "11": "Barbell_Squat", "12": "Romanian_Deadlift", "13": "Dumbbell_Lunges", "15": "Dumbbell_Bicep_Curl", "16": "Hammer_Curls", "17": "Standing_Dumbbell_Triceps_Extension", "18": "Triceps_Pushdown", "19": "Crunches", "20": "Plank", "21": "Flat_Bench_Lying_Leg_Raise", "22": "Incline_Dumbbell_Press", "23": "Decline_Dumbbell_Bench_Press", "24": "Incline_Dumbbell_Flyes", "25": "Bent-Arm_Dumbbell_Pullover", "26": "Barbell_Bench_Press_-_Medium_Grip", "27": "Barbell_Incline_Bench_Press_-_Medium_Grip", "28": "Decline_Barbell_Bench_Press", "29": "Close-Grip_Barbell_Bench_Press", "30": "Smith_Machine_Bench_Press", "31": "Smith_Machine_Incline_Bench_Press", "32": "Smith_Machine_Decline_Press", "36": "Butterfly", "39": "Cable_Crossover", "42": "Bent_Over_Two-Dumbbell_Row", "43": "Dumbbell_Incline_Row", "44": "Dumbbell_Shrug", "46": "Reverse_Grip_Bent-Over_Rows", "47": "Barbell_Deadlift", "48": "Barbell_Shrug", "50": "Smith_Machine_Bent_Over_Row", "51": "Smith_Machine_Shrug", "60": "Wide-Grip_Lat_Pulldown", "61": "Close-Grip_Front_Lat_Pulldown", "62": "Underhand_Cable_Pulldowns", "64": "Seated_Cable_Rows", "66": "One-arm_Cable_Row", "67": "Straight-Arm_Pulldown", "68": "Arnold_Dumbbell_Press", "69": "Seated_Side_Lateral_Raise", "71": "Seated_Dumbbell_Press", "72": "Standing_Military_Press", "73": "Front_Barbell_Raise", "75": "Smith_Machine_Overhead_Shoulder_Press", "77": "Machine_Shoulder_Military_Press", "78": "Machine_Lateral_Raise", "79": "Reverse_Machine_Flyes", "83": "Face_Pull", "86": "Dumbbell_Step_Ups", "89": "Standing_Dumbbell_Calf_Raise", "91": "Front_Barbell_Squat", "92": "Sumo_Deadlift", "93": "Barbell_Hip_Thrust", "94": "Good_Morning", "95": "Barbell_Lunge", "97": "Smith_Machine_Squat", "102": "Smith_Machine_Calf_Raise", "104": "Leg_Press", "107": "Hack_Squat", "110": "Leg_Extensions", "111": "Seated_Leg_Curl", "112": "Lying_Leg_Curls", "113": "Standing_Leg_Curl", "114": "Thigh_Abductor", "115": "Thigh_Adductor", "119": "Seated_Calf_Raise", "120": "Calf_Press_On_The_Leg_Press_Machine", "124": "Pull_Through", "125": "Incline_Dumbbell_Curl", "126": "Concentration_Curls", "127": "One_Arm_Dumbbell_Preacher_Curl", "128": "Zottman_Curl", "129": "Barbell_Curl", "130": "EZ-Bar_Curl", "131": "Preacher_Curl", "132": "Reverse_Barbell_Curl", "133": "Machine_Bicep_Curl", "135": "Standing_Biceps_Cable_Curl", "136": "Cable_Hammer_Curls_-_Rope_Attachment", "138": "Standing_One-Arm_Cable_Curl", "139": "Tricep_Dumbbell_Kickback", "140": "Lying_Dumbbell_Tricep_Extension", "141": "EZ-Bar_Skullcrusher", "143": "Smith_Machine_Close-Grip_Bench_Press", "147": "Triceps_Pushdown_-_Rope_Attachment", "148": "Triceps_Pushdown", "149": "Cable_One_Arm_Tricep_Extension", "150": "Cable_Rope_Overhead_Triceps_Extension", "151": "Ab_Crunch_Machine", "154": "Cable_Crunch", "156": "Standing_Cable_Wood_Chopper", "158": "Reverse_Crunch", "162": "Mountain_Climbers", "163": "Dips_-_Triceps_Version", "165": "Chin-Up", "166": "Inverted_Row", "167": "Hyperextensions_Back_Extensions", "168": "Bodyweight_Squat", "169": "Butt_Lift_Bridge", "172": "Palms-Up_Dumbbell_Wrist_Curl_Over_A_Bench", "173": "Palms-Down_Dumbbell_Wrist_Curl_Over_A_Bench", "174": "Farmers_Walk"};
+const photoBase='https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
+function photoURL(i,n=0){return photoCandidates[i]?photoBase+encodeURIComponent(photoCandidates[i])+'/'+n+'.jpg':''}
+function localImage(s){return /^data:image\/(jpeg|png|webp);base64,/i.test(s||'')}
+function picture(i,n=0){let e=library[i],url=photoURL(i,n);if(!e)return '';return url?'<img loading="lazy" class="exercisePhoto" src="'+esc(url)+'" alt="'+esc(e[1])+' – '+(n?'Endposition':'Startposition')+'" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden class="photoMissing">Foto nicht verfügbar</span>':'<span class="photoMissing">Noch kein Standardfoto</span>'}
+function devicePicture(d){if(localImage(d.photo))return '<img src="'+esc(d.photo)+'" alt="Eigenes Gerätefoto">';return Number.isInteger(d.libraryId)?picture(d.libraryId):''}
+function photoDetails(i){let e=library[i];if(!e)return;let dlg=$('photoDialog');$('photoTitle').textContent=e[1];$('photoContent').innerHTML='<div class="photoPair"><div><small>Startposition</small>'+picture(i,0)+'</div><div><small>Endposition</small>'+picture(i,1)+'</div></div><p>'+esc(e[4])+'</p><p><a href="https://yuhonas.github.io/free-exercise-db/" target="_blank" rel="noopener">Weitere Übungsfotos in Free Exercise DB</a></p>';dlg.showModal()}
+function renderLibrary(){let g=$('libGroup').value,t=$('libType').value,q=$('libSearch').value.toLowerCase();$('libResults').innerHTML=library.map((e,i)=>({e,i})).filter(({e})=>(!g||e[0]===g)&&(!t||e[3]===t)&&e.join(' ').toLowerCase().includes(q)).map(({e,i})=>'<div class="libcard"><div class="photoThumb" onclick="photoDetails('+i+')">'+picture(i)+'</div><div><b>'+esc(e[1])+'</b><p>'+esc(e[0]+' · '+e[3]+' · '+e[4])+'</p><button onclick="useLibrary('+i+')">Auswählen</button> <button onclick="photoDetails('+i+')">Bilder</button></div></div>').join('')||'<p>Keine passende Übung gefunden.</p>'}
+function useLibrary(i){if(!db.active)return;let e=library[i],d=db.devices.find(d=>d.studio===db.active&&d.name.toLowerCase()===e[1].toLowerCase());if(!d){d={id:uid(),studio:db.active,name:e[1],model:'Übungsbibliothek',setting:'',instruction:e[4],type:e[3],photo:'',muscle:e[0],libraryId:i};db.devices.push(d);persist()}$('library').classList.add('hidden');refresh();selectDevice(d.id)}
+
+// Older saved library images are placeholders, not user photos. Preserve actual photos.
+for(const d of db.devices){if(Number.isInteger(d.libraryId)&&d.photo?.startsWith('data:image/svg+xml'))d.photo=''}
+refresh();page('training');
+</script><script>if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(console.error);</script></body></html>
